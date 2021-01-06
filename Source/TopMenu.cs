@@ -274,7 +274,7 @@ namespace Benchwarp
             if (gs.ShowScene)
             {
                 sceneNamePanel.SetActive(true, false);
-                sceneNamePanel.GetText("SceneName").UpdateText(GameManager.instance.sceneName);
+                sceneNamePanel.GetText("SceneName").UpdateText(HKTranslator.Translator.TranslateSceneName(GameManager.instance.sceneName));
             }
             else sceneNamePanel.SetActive(false, true);
 
