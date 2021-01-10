@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
+using HKTranslator;
 
 namespace Benchwarp
 {
@@ -234,7 +235,7 @@ namespace Benchwarp
                              (string s) => bench.SetBench(),
                              new Rect(0f, 0f, 80f, 40f),
                              GUIController.Instance.TrajanNormal,
-                             !Benchwarp.instance.globalSettings.SwapNames ? bench.name : bench.sceneName,
+                             !Benchwarp.instance.globalSettings.SwapNames ? bench.name : Translator.TranslateSceneName(bench.sceneName),
                              fontSize
                          );
             }
