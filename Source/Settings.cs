@@ -32,6 +32,5 @@ namespace Benchwarp
         public bool NoDarkOrDreamRooms = true;
         public bool NoPreload = false;
         public bool ReducePreload = true;
-        public bool DoorWarp = false;
     }
 }

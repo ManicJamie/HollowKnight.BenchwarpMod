@@ -8,19 +8,6 @@ using HKTranslator;
 
 namespace Benchwarp
 {
-    public static class DoorWarpSelection
-    {
-        public static string area;
-        public static string room;
-        public static string door;
-
-        public static void Clear()
-        {
-            area = room = door = null;
-        }
-    }
-
-
     public static class TopMenu
     {
         private static CanvasPanel rootPanel;
@@ -53,53 +40,21 @@ namespace Benchwarp
                     ("Show Room Name", ShowSceneClicked, t.GetField(nameof(GlobalSettings.ShowScene))),
                     ("Use Room Names", SwapNamesClicked, t.GetField(nameof(GlobalSettings.SwapNames))),
                     ("Enable Deploy", EnableDeployClicked, t.GetField(nameof(GlobalSettings.EnableDeploy))),
-                    ("Always Toggle All", AlwaysToggleAllClicked, t.GetField(nameof(GlobalSettings.AlwaysToggleAll))),
-                    ("Door Warp", DoorWarpClicked, t.GetField(nameof(GlobalSettings.DoorWarp)))
+                    ("Always Toggle All", AlwaysToggleAllClicked, t.GetField(nameof(GlobalSettings.AlwaysToggleAll)))
                 }
             };
 
         private static readonly Dictionary<string, (UnityAction<string>, Vector2)> Buttons = new Dictionary<string, (UnityAction<string>, Vector2)>
         {
-            ["Deploy"] = (DeployClicked, new Vector2(-154f, 400f)),
-            ["Set"] = (SetClicked, new Vector2(-54f, 400f)),
-            ["Destroy"] = (s => BenchMaker.DestroyBench(), new Vector2(46f, 400f)),
+            ["Deploy"] = (DeployClicked, new Vector2(-154f, 300f)),
+            ["Set"] = (SetClicked, new Vector2(-54f, 300f)),
+            ["Destroy"] = (s => BenchMaker.DestroyBench(), new Vector2(46f, 300f)),
         };
 
         private static readonly Dictionary<string, (UnityAction<string>, Vector2)> CustomStartButtons = new Dictionary<string, (UnityAction<string>, Vector2)>
         {
-            ["Set Start"] = (s => CustomStartLocation.SetStart(), new Vector2(1446f, 400f))
+            ["Set Start"] = (s => CustomStartLocation.SetStart(), new Vector2(1446f, 300f))
         };
-
-        public static Vector2 GridPosition(int count, int rowSize, float hSep, float vSep, Vector2 topCenter)
-        {
-            float width = hSep * (rowSize - 1);
-
-            Vector2 pos = topCenter;
-            pos.x -= width / 2;
-
-            for (int i = 0; i < count; i++)
-            {
-                for (int j = 0; j < rowSize - 1; j++)
-                {
-                    pos.x += hSep;
-                    i++;
-                    if (i == count) return pos;
-                }
-                pos.x -= width;
-                pos.y += vSep;
-            }
-
-            return pos;
-        }
-
-        public static void RebuildMenu()
-        {
-            rootPanel.Destroy();
-            sceneNamePanel.Destroy();
-            BuildMenu(canvas);
-            rootPanel.SetActive(false, true); // collapse all subpanels
-            rootPanel.SetActive(true, false);
-        }
 
         public static void BuildMenu(GameObject _canvas)
         {
@@ -188,7 +143,7 @@ namespace Benchwarp
                     );
                 }
 
-                CanvasPanel style = MakePanel("Style", new Vector2(145f, 420f));
+                CanvasPanel style = MakePanel("Style", new Vector2(145f, 320f));
 
                 Vector2 position = new Vector2(5f, 25f);
 
@@ -199,7 +154,7 @@ namespace Benchwarp
                     position += new Vector2(0f, 30f);
                 }
 
-                CanvasPanel options = MakePanel("Options", new Vector2(245f, 420f));
+                CanvasPanel options = MakePanel("Options", new Vector2(245f, 320f));
 
                 for (int i = 0; i < Panels["Options"].Length; i++)
                 {
@@ -214,9 +169,6 @@ namespace Benchwarp
                     );
                 }
             }
-
-            
-
 
 
             CanvasPanel settings = MakePanel("Settings", new Vector2(1445f, 20f));
@@ -233,90 +185,10 @@ namespace Benchwarp
                     new Vector2(5f, 25 + i * 40)
                 );
             }
-            settings.SetActive(false, true);
 
             if (Benchwarp.instance.globalSettings.WarpOnly) return;
 
-            DoorWarpSelection.Clear();
-            if (Benchwarp.instance.globalSettings.DoorWarp)
-            {
-                CanvasPanel door3 = MakePanel("Doors", new Vector2(-5f, 20f));
-                CanvasPanel door2 = MakePanel("Rooms", new Vector2(395f, 20f));
-                CanvasPanel door1 = MakePanel("Areas", new Vector2(1045f, 20f));
-                List<string> doorAreas = DoorWarp.Doors.Select(d => d.area).Distinct().ToList();
-
-                for (int i = 0; i < doorAreas.Count; i++)
-                {
-                    string name = doorAreas[i];
-                    UnityAction<string> action = (areaSelected) =>
-                    {
-                        DoorWarpSelection.Clear();
-                        DoorWarpSelection.area = areaSelected;
-                        door2.ClearButtons();
-                        door3.ClearButtons();
-                        door2.SetActive(true, false);
-                        door3.SetActive(false, false);
-                        List<string> rooms = DoorWarp.Doors
-                        .Where(d => d.area == areaSelected)
-                        .Select(d => d.room)
-                        .Distinct().ToList();
-                        for (int j = 0; j < rooms.Count; j++)
-                        {
-                            AddButton
-                            (
-                                door2,
-                                rooms[j],
-                                (roomSelected) =>
-                                {
-                                    DoorWarpSelection.door = null;
-                                    DoorWarpSelection.room = roomSelected;
-                                    door3.ClearButtons();
-                                    door3.SetActive(true, false);
-                                    List<string> doors = DoorWarp.Doors.Where(d => d.room == roomSelected).Select(d => d.door).ToList();
-                                    for (int k = 0; k < doors.Count; k++)
-                                    {
-                                        AddButton
-                                        (
-                                            door3,
-                                            doors[k],
-                                            (doorSelected) => DoorWarpSelection.door = doorSelected,
-                                            GridPosition(k, 2, 100f, 40f, new Vector2(5f, 25f))
-                                        );
-                                    }
-                                    if (!door3.active) door3.ToggleActive();
-                                },
-                                GridPosition(j, 6, 100f, 40f, new Vector2(5f, 25f))
-                            );
-                        }
-                    };
-
-                    AddButton
-                    (
-                        door1,
-                        name,
-                        action,
-                        GridPosition(i, 7, 100f, 40f, new Vector2(5f, 25f))
-                    );
-                }
-
-                rootPanel.AddButton
-                (
-                    "Flip",
-                    GUIController.Instance.images["ButtonRect"],
-                    new Vector2(-154f, 0f),
-                    Vector2.zero,
-                    FlipClicked,
-                    buttonRect,
-                    GUIController.Instance.TrajanBold,
-                    "Flip"
-                );
-
-                rootPanel.FixRenderOrder();
-                return;
-            }
-
-
-            //if (!CustomStartLocation.Inactive) button should exist or else will give an nre
+            if (!CustomStartLocation.Inactive)
             {
                 foreach (KeyValuePair<string, (UnityAction<string>, Vector2)> pair in CustomStartButtons)
                 {
@@ -408,16 +280,9 @@ namespace Benchwarp
             else sceneNamePanel.SetActive(false, true);
 
             if (GameManager.instance.IsGamePaused())
-            {
-                if (!rootPanel.active)
-                {
-                    RebuildMenu();
-                }
-            }
+                rootPanel.SetActive(true, false);
             else
-            {
                 rootPanel.SetActive(false, true);
-            }
 
             if (gs.AlwaysToggleAll)
             {
@@ -484,84 +349,29 @@ namespace Benchwarp
                 }
             }
 
-            if (!CustomStartLocation.Inactive && rootPanel.GetButton("Set Start") is CanvasButton startButton)
+            if (!CustomStartLocation.Inactive)
             {
-                startButton.SetTextColor(CustomStartLocation.CheckIfAtStart() ? Color.yellow : Color.white);
+                rootPanel.GetButton("Set Start").SetTextColor(CustomStartLocation.CheckIfAtStart() ? Color.yellow : Color.white);
             }
 
-            if (gs.DoorWarp)
+
+            foreach (Bench bench in Bench.Benches)
             {
-                if (rootPanel.GetPanel("Areas")?.active ?? false)
-                {
-                    foreach (string area in DoorWarp.Areas)
-                    {
-                        if (area == DoorWarpSelection.area)
-                        {
-                            rootPanel.GetButton(area, "Areas")?.SetTextColor(Color.yellow);
-                        }
-                        else
-                        {
-                            rootPanel.GetButton(area, "Areas")?.SetTextColor(Color.white);
-                        }
-                    }
-                }
+                if (!rootPanel.GetPanel(bench.areaName).active) continue;
 
-                if ((rootPanel.GetPanel("Rooms")?.active ?? false) && !string.IsNullOrEmpty(DoorWarpSelection.area))
+                if (!bench.visited && !gs.UnlockAllBenches)
                 {
-                    foreach (string room in DoorWarp.RoomsByArea[DoorWarpSelection.area])
-                    {
-                        if (room == DoorWarpSelection.room)
-                        {
-                            rootPanel.GetButton(room, "Rooms")?.SetTextColor(Color.yellow);
-                        }
-                        else
-                        {
-                            rootPanel.GetButton(room, "Rooms")?.SetTextColor(Color.white);
-                        }
-                    }
+                    rootPanel.GetButton(bench.name, bench.areaName).SetTextColor(Color.red);
                 }
-
-                if ((rootPanel.GetPanel("Doors")?.active ?? false) && !string.IsNullOrEmpty(DoorWarpSelection.room))
+                else
                 {
-                    foreach (string door in DoorWarp.DoorsByRoom[DoorWarpSelection.room])
-                    {
-                        if (door == DoorWarpSelection.door)
-                        {
-                            rootPanel.GetButton(door, "Doors")?.SetTextColor(Color.yellow);
-                        }
-                        else
-                        {
-                            rootPanel.GetButton(door, "Doors")?.SetTextColor(Color.white);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                foreach (Bench bench in Bench.Benches)
-                {
-                    if (!rootPanel.GetPanel(bench.areaName).active) continue;
-
-                    if (!bench.visited && !gs.UnlockAllBenches)
-                    {
-                        rootPanel.GetButton(bench.name, bench.areaName).SetTextColor(Color.red);
-                    }
-                    else
-                    {
-                        rootPanel.GetButton(bench.name, bench.areaName).SetTextColor(bench.benched ? Color.yellow : Color.white);
-                    }
+                    rootPanel.GetButton(bench.name, bench.areaName).SetTextColor(bench.benched ? Color.yellow : Color.white);
                 }
             }
         }
 
         private static void WarpClicked(string buttonName)
         {
-            if (Benchwarp.instance.globalSettings.DoorWarp)
-            {
-                if (!string.IsNullOrEmpty(DoorWarpSelection.door)) ChangeScene.ChangeToScene(DoorWarpSelection.room, DoorWarpSelection.door);
-                return;
-            }
-
             if (Benchwarp.instance.globalSettings.UnlockAllBenches)
                 UnlockAllClicked(null);
 
@@ -722,7 +532,9 @@ namespace Benchwarp
         {
             Benchwarp.instance.globalSettings.SwapNames = !Benchwarp.instance.globalSettings.SwapNames;
             Benchwarp.instance.SaveGlobalSettings();
-            RebuildMenu();
+            rootPanel.Destroy();
+            sceneNamePanel.Destroy();
+            BuildMenu(canvas);
         }
 
         private static void EnableDeployClicked(string buttonName)
@@ -730,20 +542,15 @@ namespace Benchwarp
             Benchwarp.instance.globalSettings.EnableDeploy = !Benchwarp.instance.globalSettings.EnableDeploy;
             Benchwarp.instance.SaveGlobalSettings();
             BenchMaker.DestroyBench();
-            RebuildMenu();
+            rootPanel.Destroy();
+            sceneNamePanel.Destroy();
+            BuildMenu(canvas);
         }
 
         private static void AlwaysToggleAllClicked(string buttonName)
         {
             Benchwarp.instance.globalSettings.AlwaysToggleAll = !Benchwarp.instance.globalSettings.AlwaysToggleAll;
             Benchwarp.instance.SaveGlobalSettings();
-        }
-
-        private static void DoorWarpClicked(string buttonName)
-        {
-            Benchwarp.instance.globalSettings.DoorWarp = !Benchwarp.instance.globalSettings.DoorWarp;
-            Benchwarp.instance.SaveGlobalSettings();
-            RebuildMenu();
         }
 
         #endregion
@@ -762,27 +569,6 @@ namespace Benchwarp
                     if (rootPanel.GetPanel(s).active)
                         rootPanel.TogglePanel(s);
             }
-        }
-
-        private static void FlipClicked(string buttonName)
-        {
-            if (string.IsNullOrEmpty(DoorWarpSelection.door)) return;
-
-            Door orig = DoorWarp.Doors.FirstOrDefault(d => d.room == DoorWarpSelection.room && d.door == DoorWarpSelection.door);
-            if (orig is null) return;
-
-            DoorWarpSelection.area = orig.mapsTo.area;
-            DoorWarpSelection.room = orig.mapsTo.room;
-            DoorWarpSelection.door = orig.mapsTo.door;
-
-            CanvasPanel areaPanel = rootPanel.GetPanel("Areas");
-            CanvasPanel roomPanel = rootPanel.GetPanel("Rooms");
-            CanvasPanel doorPanel = rootPanel.GetPanel("Doors");
-
-            if (!areaPanel.active) areaPanel.ToggleActive();
-            areaPanel.GetButton(orig.mapsTo.area).ButtonClicked();
-            roomPanel.GetButton(orig.mapsTo.room).ButtonClicked();
-            doorPanel.GetButton(orig.mapsTo.door).ButtonClicked();
         }
     }
 }
