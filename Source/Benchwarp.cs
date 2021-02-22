@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using System;
 using Modding;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -35,6 +36,14 @@ namespace Benchwarp
         public Benchwarp()
         {
             instance = this;
+            try
+            {
+                DoorWarp.Load();
+            }
+            catch (Exception e)
+            {
+                LogError(e);
+            }
         }
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloaded)
@@ -63,6 +72,9 @@ namespace Benchwarp
 
             // Imagine if GetPlayerIntHook actually worked
             On.GameManager.OnNextLevelReady += FixRespawnType;
+
+            // Create Translator dictionaries from file.
+            Translator.Initialize();
         }
 
         public override string GetVersion()
@@ -284,8 +296,8 @@ namespace Benchwarp
             On.GameManager.OnNextLevelReady -= FixRespawnType;
 
             BenchMaker.DestroyBench(DontDeleteData: true);
-            Object.Destroy(TopMenu.canvas);
-            Object.Destroy(UIObj);
+            GameObject.Destroy(TopMenu.canvas);
+            GameObject.Destroy(UIObj);
         }
 
         new public void SaveGlobalSettings()
